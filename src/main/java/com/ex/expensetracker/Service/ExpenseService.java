@@ -26,23 +26,13 @@ public class ExpenseService {
     }
 
     public Expense getExpenseById(Long id) throws ExpenseNotFoundException {
-        Optional<Expense> _expense = expenseRepository.findById(id);
-
-        if (_expense.isEmpty()) {
-            throw new ExpenseNotFoundException("Expense does not exist...");
-        }
-
-        return _expense.get();
+        return expenseRepository.findById(id)
+                .orElseThrow(() -> new ExpenseNotFoundException("Expense does not exist..."));
     }
 
     public Expense getExpenseByName(String name) throws ExpenseNotFoundException {
-        Optional<Expense> _expense = expenseRepository.findExpenseByName(name);
-
-        if (_expense.isEmpty()) {
-            throw new ExpenseNotFoundException("Expense does not exist...");
-        }
-
-        return _expense.get();
+        return expenseRepository.findExpenseByName(name)
+                .orElseThrow(() -> new ExpenseNotFoundException("Expense does not exist..."));
     }
 
     public Expense addExpense(Expense expense) throws ExpenseExistsException {
@@ -56,28 +46,24 @@ public class ExpenseService {
     }
 
     public void deleteExpenseById(Long expenseId) {
-        Optional<Expense> _expense = expenseRepository.findById(expenseId);
-
-        if (_expense.isPresent()) {
-            System.out.println("Deleting expense id " + expenseId);
+        if (expenseRepository.existsById(expenseId)) {
+            log.info("Deleting expense with id: {}", expenseId);
             expenseRepository.deleteById(expenseId);
+        } else {
+            log.warn("Attempted to delete non-existent expense with id: {}", expenseId);
         }
-        return;
     }
 
     public ResponseEntity<Expense> updateoldExpense(Long oldExpenseId, Expense expense) throws ExpenseNotFoundException {
-        Optional<Expense> _expense = expenseRepository.findById(oldExpenseId);
+        Expense existingExpense = expenseRepository.findById(oldExpenseId)
+                .orElseThrow(() -> new ExpenseNotFoundException("Expense does not exist..."));
 
-        if (_expense.isEmpty()) {
-            throw new ExpenseNotFoundException("Expense does not exist...");
-        }
-
-        _expense.get().setName(expense.getName());
-        _expense.get().setAmount(expense.getAmount());
-        _expense.get().setCategoryId(expense.getCategoryId());
-        _expense.get().setComments(expense.getComments());
-        _expense.get().setCreationDate(expense.getCreationDate());
-        Expense updatedExpense = expenseRepository.save(_expense.get());
+        existingExpense.setName(expense.getName());
+        existingExpense.setAmount(expense.getAmount());
+        existingExpense.setCategoryId(expense.getCategoryId());
+        existingExpense.setComments(expense.getComments());
+        existingExpense.setCreationDate(expense.getCreationDate());
+        Expense updatedExpense = expenseRepository.save(existingExpense);
         return ResponseEntity.ok(updatedExpense);
     }
 }

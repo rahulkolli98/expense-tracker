@@ -24,27 +24,27 @@ public class CategoryController {
     private final CategoryService categoryService;
 
     @GetMapping()
-    public List<Category> getCategoryByIdorName(
+    public List<Category> getCategoryByIdOrName(
             @RequestParam(required = false) Long id,
             @RequestParam(required = false) String name) {
-        List<Category> result = new ArrayList<Category>();
+        List<Category> result = new ArrayList<>();
         try {
             if ((id == null) && (name == null)) {
                 log.info("Getting list of all categories...");
                 result = categoryService.getCategories();
             }
             else if (name == null) {
-                log.info("Getting category by id "+ id +"...");
+                log.info("Getting category by id: {}", id);
                 result.add(categoryService.getCategoryById(id));
             }
             else {
-                log.info("Getting category by name "+ name +"...");
+                log.info("Getting category by name: {}", name);
                 result.add(categoryService.getCategoryByName(name));
             }
         } catch (CategoryNotFoundException e) {
             log.error("Failed to fetch category information...");
             throw new ResponseStatusException(
-                    HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage(), e);
+                    HttpStatus.NOT_FOUND, e.getMessage(), e);
         }
         return result;
     }
@@ -52,12 +52,12 @@ public class CategoryController {
     @PostMapping
     public void addNewCategory(@RequestBody Category category) {
         try {
-            log.info("Adding new category "+ category +"...");
+            log.info("Adding new category: {}", category.getName());
             categoryService.addNewCategory(category);
         } catch (CategoryExistsException e) {
             log.error("Failed to add new category...");
             throw new ResponseStatusException(
-                    HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage(), e);
+                    HttpStatus.CONFLICT, e.getMessage(), e);
         }
     }
 
@@ -73,10 +73,10 @@ public class CategoryController {
 
         for (String category : categories) {
             try {
-                log.info("Deleting category " + category + "...");
+                log.info("Deleting category: {}", category);
                 categoryService.deleteCategoryByName(category);
             } catch (CategoryNotFoundException e) {
-                log.warn("Category not found: " + category);
+                log.warn("Category not found: {}", category);
                 failedCategories.add(category);
             }
         }
@@ -97,12 +97,12 @@ public class CategoryController {
             @PathVariable("categoryId") Long categoryId
     ) {
         try {
-            log.info("Deleting category id "+ categoryId +"...");
+            log.info("Deleting category id: {}", categoryId);
             categoryService.deleteCategoryById(categoryId);
         } catch (CategoryNotFoundException e) {
             log.error("Failed to delete category...");
             throw new ResponseStatusException(
-                    HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage(), e);
+                    HttpStatus.NOT_FOUND, e.getMessage(), e);
         }
     }
 
@@ -112,12 +112,12 @@ public class CategoryController {
             @RequestBody Category category
     ) {
         try {
-            log.info("update category name "+ oldCategoryName +"...");
+            log.info("Updating category name: {}", oldCategoryName);
             return categoryService.updateCategory(oldCategoryName, category);
         } catch (CategoryNotFoundException e) {
             log.error("Failed to update category...");
             throw new ResponseStatusException(
-                    HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage(), e);
+                    HttpStatus.NOT_FOUND, e.getMessage(), e);
         }
     }
 }

@@ -19,7 +19,6 @@ import java.util.Optional;
 @Slf4j
 public class CategoryService {
 
-    @Autowired
     private final CategoryRepository categoryRepository;
 
     public List<Category> getCategories() {
@@ -27,73 +26,46 @@ public class CategoryService {
     }
 
     public void addNewCategory(Category category) throws CategoryExistsException {
-        Optional<Category> _category = categoryRepository.findCategoryByName(category.getName());
-
-        if (_category.isPresent()) {
-            log.error("category " + category.getName() + " already exists...");
+        if (categoryRepository.findCategoryByName(category.getName()).isPresent()) {
+            log.error("Category {} already exists...", category.getName());
             throw new CategoryExistsException("Category exists...");
         }
         categoryRepository.save(category);
     }
 
     public void deleteCategoryByName(String categoryName) throws CategoryNotFoundException {
-        Optional<Category> _category = categoryRepository.findCategoryByName(categoryName);
-
-        if (_category.isEmpty()) {
-            log.error("category " + categoryName + " does not exist...");
-            throw new CategoryNotFoundException("Category does not exist...");
-        }
-        System.out.println("Deleting " + categoryName);
-        categoryRepository.deleteById(_category.get().getId());
-        return;
+        Category category = categoryRepository.findCategoryByName(categoryName)
+                .orElseThrow(() -> new CategoryNotFoundException("Category does not exist..."));
+        log.info("Deleting category: {}", categoryName);
+        categoryRepository.deleteById(category.getId());
     }
 
     public void deleteCategoryById(Long categoryId) throws CategoryNotFoundException {
-        Optional<Category> _category = categoryRepository.findById(categoryId);
-
-        if (_category.isPresent()) {
-            categoryRepository.deleteById(categoryId);
-            return;
+        if (!categoryRepository.existsById(categoryId)) {
+            log.warn("Attempted to delete non-existent category with id: {}", categoryId);
+            throw new CategoryNotFoundException("Category does not exist...");
         }
-
-        log.error("category id " + categoryId + " does not exist...");
-        throw new CategoryNotFoundException("Category does not exist...");
+        categoryRepository.deleteById(categoryId);
     }
 
     @Transactional
     public ResponseEntity<Category> updateCategory(String oldCategoryName, Category category) throws CategoryNotFoundException {
-        Optional<Category> _category = categoryRepository.findCategoryByName(oldCategoryName);
+        Category existingCategory = categoryRepository.findCategoryByName(oldCategoryName)
+                .orElseThrow(() -> new CategoryNotFoundException("Category does not exist..."));
 
-        if (_category.isEmpty()) {
-            log.error("category " + oldCategoryName + " does not exist...");
-            throw new CategoryNotFoundException("Category does not exist...");
-        }
-
-        _category.get().setName(category.getName());
-        _category.get().setDescription(category.getDescription());
-        Category updatedCategory = categoryRepository.save(_category.get());
+        existingCategory.setName(category.getName());
+        existingCategory.setDescription(category.getDescription());
+        Category updatedCategory = categoryRepository.save(existingCategory);
         return ResponseEntity.ok(updatedCategory);
     }
 
     public Category getCategoryById(Long categoryId) throws CategoryNotFoundException {
-        Optional<Category> _category = categoryRepository.findById(categoryId);
-
-        if (_category.isEmpty()) {
-            log.error("category id " + categoryId + " does not exist...");
-            throw new CategoryNotFoundException("Category does not exist...");
-        }
-
-        return _category.get();
+        return categoryRepository.findById(categoryId)
+                .orElseThrow(() -> new CategoryNotFoundException("Category does not exist..."));
     }
 
     public Category getCategoryByName(String categoryName) throws CategoryNotFoundException {
-        Optional<Category> _category = categoryRepository.findCategoryByName(categoryName);
-
-        if (_category.isEmpty()) {
-            log.error("category " + categoryName + " does not exist...");
-            throw new CategoryNotFoundException("Category does not exist...");
-        }
-
-        return _category.get();
+        return categoryRepository.findCategoryByName(categoryName)
+                .orElseThrow(() -> new CategoryNotFoundException("Category does not exist..."));
     }
 }

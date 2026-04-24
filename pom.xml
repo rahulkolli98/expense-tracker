@@ -18,7 +18,9 @@
 		<license/>
 	</licenses>
 	<developers>
-		<developer/>
+		<developer>
+			<name>Rahul Kolli</name>
+		</developer>
 	</developers>
 	<scm>
 		<connection/>

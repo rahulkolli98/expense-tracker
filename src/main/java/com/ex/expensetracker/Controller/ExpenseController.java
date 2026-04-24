@@ -33,7 +33,7 @@ public class ExpenseController {
 
     @GetMapping()
     @Operation(summary = "Returns list of all expenses in the system.")
-    public List<Expense> getExpenseByIdorName(
+    public List<Expense> getExpenseByIdOrName(
             @RequestParam(required = false) Long id,
             @RequestParam(required = false) String name) {
         List<Expense> result = new ArrayList<>();
@@ -49,7 +49,7 @@ public class ExpenseController {
             }
         } catch (ExpenseNotFoundException e) {
             throw new ResponseStatusException(
-                    HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage(), e);
+                    HttpStatus.NOT_FOUND, e.getMessage(), e);
         }
         return result;
     }
@@ -61,10 +61,10 @@ public class ExpenseController {
             return expenseService.addExpense(expense);
         } catch (DateTimeParseException e) {
             throw new ResponseStatusException(
-                    HttpStatus.INTERNAL_SERVER_ERROR, "Invalid date format, use YYYY-MM-DD format", e);
+                    HttpStatus.BAD_REQUEST, "Invalid date format, use YYYY-MM-DD format", e);
         } catch (ExpenseExistsException e) {
             throw new ResponseStatusException(
-                    HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage(), e);
+                    HttpStatus.CONFLICT, e.getMessage(), e);
         }
     }
 
@@ -87,9 +87,12 @@ public class ExpenseController {
     ) {
         try {
             return expenseService.updateoldExpense(oldExpenseId, expense);
-        } catch (DateTimeParseException | ExpenseNotFoundException e) {
+        } catch (DateTimeParseException e) {
             throw new ResponseStatusException(
-                    HttpStatus.INTERNAL_SERVER_ERROR, e.getMessage(), e);
+                    HttpStatus.BAD_REQUEST, "Invalid date format, use YYYY-MM-DD format", e);
+        } catch (ExpenseNotFoundException e) {
+            throw new ResponseStatusException(
+                    HttpStatus.NOT_FOUND, e.getMessage(), e);
         }
     }
 }
